@@ -1,0 +1,25 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:13.1-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: $DB_NAME
+      POSTGRES_USER: $DB_USER
+      POSTGRES_PASSWORD: $DB_PASS
+    ports:
+      - $DB_HOST:$DB_PORT:5432
+    volumes:
+      - ./tmp/postgres:/var/lib/postgresql/data
+  minio:
+    image: minio/minio:12785-c6d7d3b
+    restart: always
+    ports:
+      - 127.0.0.1:9000:9000
+      - 127.0.0.1:9001:9001
+    command: server /data --console-address :9001
+    volumes:
+      - ./tmp/minio:/data
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
