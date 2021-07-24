@@ -4,5 +4,5 @@ start:
 up:
 	@docker-compose up -d
 
-dow:
+down:
 	@docker-compose down

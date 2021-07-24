@@ -79,17 +79,19 @@ Create the following policy
 CREATE TABLE IF NOT EXISTS images (
 	id uuid DEFAULT gen_random_uuid(),
 	bucket text NOT NULL,
-	prefix text NOT NULL DEFAULT '',
-	extension text NOT NULL,
-	uploaded boolean NOT NULL DEFAULT false,
+  folder text NOT NULL,
+  name text NOT NULL,
+  width int NOT NULL DEFAULT 0,
+  height int NOT NULL DEFAULT 0,
+	primary boolean NOT NULL DEFAULT false,
+  version text NOT NULL,
 	created_at timestamptz NOT NULL DEFAULT current_timestamp,
-	updated_at timestamptz NOT NULL DEFAULT current_timestamp
+	updated_at timestamptz NOT NULL DEFAULT current_timestamp,
+  PRIMARY KEY (id),
+  UNIQUE (bucket, folder, name, width)
 );
 
-INSERT INTO images (bucket, prefix, extension) VALUES
-('mybucket', 'assets', '.png');
-table iamges;
-drop table images;
+CREATE UNIQUE INDEX unique_primary_image ON images(bucket, folder, name) WHERE (primary IS TRUE);
 
 CREATE EXTENSION moddatetime;
 CREATE TRIGGER mdt_images
