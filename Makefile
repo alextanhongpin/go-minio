@@ -1,5 +1,8 @@
+include .env
+export
+
 start:
-	go run main.go
+	go run *.go
 
 up:
 	@docker-compose up -d

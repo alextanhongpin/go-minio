@@ -79,23 +79,33 @@ Create the following policy
 CREATE TABLE IF NOT EXISTS images (
 	id uuid DEFAULT gen_random_uuid(),
 	bucket text NOT NULL,
-  folder text NOT NULL,
-  name text NOT NULL,
-  width int NOT NULL DEFAULT 0,
-  height int NOT NULL DEFAULT 0,
-	primary boolean NOT NULL DEFAULT false,
-  version text NOT NULL,
+	key text NOT NULL,
+	width int NOT NULL,
+	height int NOT NULL,
+	version text NOT NULL,
+	meta jsonb NOT NULL DEFAULT '{}',
+	tags text[] NOT NULL DEFAULT '{}',
 	created_at timestamptz NOT NULL DEFAULT current_timestamp,
 	updated_at timestamptz NOT NULL DEFAULT current_timestamp,
-  PRIMARY KEY (id),
-  UNIQUE (bucket, folder, name, width)
+	PRIMARY KEY (id),
+	UNIQUE (bucket, key)
 );
-
-CREATE UNIQUE INDEX unique_primary_image ON images(bucket, folder, name) WHERE (primary IS TRUE);
 
 CREATE EXTENSION moddatetime;
 CREATE TRIGGER mdt_images
 	BEFORE UPDATE ON images
 	FOR EACH ROW
 	EXECUTE PROCEDURE moddatetime(updated_at);
+
+CREATE INDEX idx_tags ON images USING GIN(tags); -- GIN Index (array)
+
+
+INSERT INTO images(bucket, key, width, height, version, tags)
+VALUES ('mybucket', 'path/to/file/320w.png', 320, 480, 'xytz', '{hello}')
+ON CONFLICT (bucket, key) DO UPDATE SET version = EXCLUDED.version;
+
+select * from images where tags <@ '{hello}';
+table images;
+
+select * from images;
 ```
