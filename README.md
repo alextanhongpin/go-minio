@@ -76,6 +76,8 @@ Create the following policy
 ## Database schema
 
 ```sql
+-- TODO: Split into image directory, and images. We need a pointer to the image
+-- directory that returns multiple image resolution.
 CREATE TABLE IF NOT EXISTS images (
 	id uuid DEFAULT gen_random_uuid(),
 	bucket text NOT NULL,
@@ -104,3 +106,18 @@ INSERT INTO images(bucket, key, width, height, extension, version, tags)
 VALUES ('mybucket', 'path/to/file', 320, 480, '.png', 'xytz', '{hello}')
 ON CONFLICT (bucket, key, width, extension) DO UPDATE SET version = EXCLUDED.version;
 ```
+
+
+## Manage images
+
+- how to ensure that images returned are responsive? Most application only assumes one image will be returned. When viewing on mobile and web, we might want to consider returning images with different sizes.
+- instead of a single image src, e.g. `foo.png`, we create a collection called `foo/` and place all the images with different resolutions inside, e.g. `foo/320w.png, foo/420w.jpg`. The explanation for `w` descriptor can be found [here](https://stackoverflow.com/questions/40890825/explain-w-in-srcset-of-image)
+- image resolution and art direction (not implemented) requires different way of handling on the Frontend
+- resizing and compressing. It is important to have standardize sizes, so 320px instead of 277px etc. If I upload file with size 499px, I should be provided an option to resize them to 480px, 360px, 320px etc. Image manipulation is not so important here. When resizing, the aspect ratio should be kept the same.
+- how to deal uploading images with different extension? Format them all into a standardize format.
+- viewing images stored in S3 and sync to database. However, the syncing will be out of tune once some operation is done in S3/Postgres directly without the other knowing about it. Using S3 Event notification will work, but requires more cost/effort to implement.
+- uploading different image sizes for a particular asset. Say if I want to upload an image named `foo`, I should be able to upload all the different sizes and have them previewed/returned as img `srcset`.
+- images should be load lazily with the `loading=lazy` HTML attribute.
+- bulk tagging and adding metadata for images
+- bulk upload images with different resolutions
+- how to reference the images stored here from other services? Store the image id (?) can be tricky, since there will be more than one collection of image with different image resolutions.
