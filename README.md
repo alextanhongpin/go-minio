@@ -83,12 +83,13 @@ CREATE TABLE IF NOT EXISTS images (
 	width int NOT NULL,
 	height int NOT NULL,
 	version text NOT NULL,
+	extension text NOT NULL,
 	meta jsonb NOT NULL DEFAULT '{}',
 	tags text[] NOT NULL DEFAULT '{}',
 	created_at timestamptz NOT NULL DEFAULT current_timestamp,
 	updated_at timestamptz NOT NULL DEFAULT current_timestamp,
 	PRIMARY KEY (id),
-	UNIQUE (bucket, key)
+	UNIQUE (bucket, key, width, extension)
 );
 
 CREATE EXTENSION moddatetime;
@@ -99,13 +100,7 @@ CREATE TRIGGER mdt_images
 
 CREATE INDEX idx_tags ON images USING GIN(tags); -- GIN Index (array)
 
-
-INSERT INTO images(bucket, key, width, height, version, tags)
-VALUES ('mybucket', 'path/to/file/320w.png', 320, 480, 'xytz', '{hello}')
-ON CONFLICT (bucket, key) DO UPDATE SET version = EXCLUDED.version;
-
-select * from images where tags <@ '{hello}';
-table images;
-
-select * from images;
+INSERT INTO images(bucket, key, width, height, extension, version, tags)
+VALUES ('mybucket', 'path/to/file', 320, 480, '.png', 'xytz', '{hello}')
+ON CONFLICT (bucket, key, width, extension) DO UPDATE SET version = EXCLUDED.version;
 ```
