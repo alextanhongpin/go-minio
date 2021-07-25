@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"path/filepath"
 	"time"
 
 	"github.com/google/uuid"
@@ -14,6 +16,7 @@ type Image struct {
 	ID        uuid.UUID
 	Bucket    string
 	Key       string
+	Extension string
 	Width     int64
 	Height    int64
 	Version   string
@@ -21,6 +24,10 @@ type Image struct {
 	Tags      pgtype.TextArray
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
+}
+
+func (i Image) URL() string {
+	return filepath.Join(i.Bucket, i.Key, fmt.Sprintf("%dw%s?versionId=%s", i.Width, i.Extension, i.Version))
 }
 
 type ImageStore struct {
@@ -32,20 +39,21 @@ func NewImageStore(db *sqlx.DB) *ImageStore {
 }
 
 type CreateRequest struct {
-	Bucket  string
-	Key     string
-	Width   int
-	Height  int
-	Version string
-	Tags    pgtype.TextArray
+	Bucket    string
+	Key       string
+	Width     int
+	Height    int
+	Version   string
+	Extension string
+	Tags      pgtype.TextArray
 }
 
 func (s *ImageStore) Create(ctx context.Context, req CreateRequest) (Image, error) {
 	var img Image
 	namedStmt, err := s.db.PrepareNamedContext(ctx, `
-		INSERT INTO images(bucket, key, width, height, version, tags)
-		VALUES (:bucket, :key, :width, :height, :version, :tags)
-		ON CONFLICT (bucket, key) DO UPDATE SET version = EXCLUDED.version
+		INSERT INTO images(bucket, key, width, height, extension, version, tags)
+		VALUES (:bucket, :key, :width, :height, :extension, :version, :tags)
+		ON CONFLICT (bucket, key, width, extension) DO UPDATE SET version = EXCLUDED.version
 		RETURNING *
 	`)
 	if err != nil {

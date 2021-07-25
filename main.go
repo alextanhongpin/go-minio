@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/jackc/pgtype"
 )
@@ -24,7 +25,8 @@ func main() {
 	}
 
 	ctx := context.Background()
-	uploader := NewUploader(NewUploaderConfig())
+	uploaderConfig := NewUploaderConfig()
+	uploader := NewUploader(uploaderConfig)
 	res, err := uploader.Upload(ctx, UploadRequest{
 		Reader:   f,
 		Filename: fileStat.Name(),
@@ -38,12 +40,13 @@ func main() {
 		log.Fatalln(err)
 	}
 	img, err := store.Create(ctx, CreateRequest{
-		Bucket:  res.Bucket,
-		Key:     res.Key,
-		Width:   res.Width,
-		Height:  res.Height,
-		Version: res.VersionID,
-		Tags:    tags,
+		Bucket:    res.Bucket,
+		Key:       res.Key,
+		Width:     res.Width,
+		Height:    res.Height,
+		Version:   res.VersionID,
+		Extension: res.Extension,
+		Tags:      tags,
 	})
 	if err != nil {
 		log.Fatalln(err)
@@ -54,5 +57,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Println(images)
+	for _, img := range images {
+		log.Println(img.ID, "http://"+filepath.Join(uploaderConfig.Endpoint, img.URL()))
+	}
 }

@@ -79,8 +79,7 @@ type UploadResponse struct {
 	VersionID string
 	Width     int
 	Height    int
-	//Meta      json.RawMessage
-	//Tags      []string
+	Extension string
 }
 
 func (u *Uploader) Upload(ctx context.Context, req UploadRequest) (*UploadResponse, error) {
@@ -98,10 +97,13 @@ func (u *Uploader) Upload(ctx context.Context, req UploadRequest) (*UploadRespon
 	// Since image.DecodeConfig consumes the reader, we need to duplicate the
 	// filestream.
 	var buf bytes.Buffer
-	tee := io.TeeReader(reader, &buf)
+	tee, err := io.ReadAll(io.TeeReader(reader, &buf))
+	if err != nil {
+		return nil, err
+	}
 
 	// Skip if .svg, because this only works for jpeg, gif, and png.
-	im, format, err := image.DecodeConfig(tee)
+	im, format, err := image.DecodeConfig(bytes.NewBuffer(tee))
 	if err != nil {
 		return nil, fmt.Errorf("%w: failed to decode image", err)
 	}
@@ -131,7 +133,8 @@ func (u *Uploader) Upload(ctx context.Context, req UploadRequest) (*UploadRespon
 	}
 	return &UploadResponse{
 		Bucket:    bucket,
-		Key:       key,
+		Key:       filename.Name(),
+		Extension: filename.Extension(),
 		Width:     im.Width,
 		Height:    im.Height,
 		VersionID: uploadInfo.VersionID,
