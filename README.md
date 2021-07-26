@@ -78,6 +78,7 @@ Create the following policy
 ```sql
 -- TODO: Split into image directory, and images. We need a pointer to the image
 -- directory that returns multiple image resolution.
+-- For simplicity, just use the id as the key, id.png. To group a bunch of images, just use another table to store the path mapping to virtual directory.
 CREATE TABLE IF NOT EXISTS images (
 	id uuid DEFAULT gen_random_uuid(),
 	bucket text NOT NULL,
